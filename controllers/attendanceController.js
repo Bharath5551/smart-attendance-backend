@@ -65,3 +65,47 @@ exports.getAttendanceSummary = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const User = require("../models/User");
+
+exports.getSubjectAttendance = async (req, res) => {
+  try {
+    const subject = req.params.subject;
+
+    // total sessions for this subject
+    const totalSessions = await Session.countDocuments({ subject });
+
+    // all students
+    const students = await User.find({ role: "student" });
+
+    const result = [];
+
+    for (const student of students) {
+      const attended = await Attendance.countDocuments({
+        studentId: student._id,
+        subject
+      });
+
+      const percentage =
+        totalSessions === 0
+          ? 0
+          : ((attended / totalSessions) * 100).toFixed(1);
+
+      result.push({
+        name: student.name,
+        usn: student.usn,
+        attended,
+        percentage
+      });
+    }
+
+    res.json({
+      subject,
+      totalSessions,
+      students: result
+    });
+
+  } catch (err) {
+    console.error("SUBJECT ATTENDANCE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
