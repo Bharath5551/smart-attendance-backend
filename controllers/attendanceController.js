@@ -12,6 +12,11 @@ if (!session) {
   return res.status(404).json({ message: "Session not found" });
 }
 
+// ⛔ EXPIRY CHECK
+if (new Date() > session.expiresAt) {
+  return res.status(400).json({ message: "Session expired" });
+}
+
 await Attendance.create({
   studentId,
   sessionId,
