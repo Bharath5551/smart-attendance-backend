@@ -8,19 +8,23 @@ exports.startSession = async (req, res) => {
       return res.status(400).json({ message: "Subject required" });
     }
 
+    // ⏱️ session valid for 2 minutes
+    const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
+
     const session = await Session.create({
       teacherId: req.user.id,
-      subject
+      subject,
+      expiresAt
     });
 
     res.json({
       message: "Session started",
       sessionId: session._id,
-      subject: session.subject
+      subject: session.subject,
+      expiresAt
     });
 
   } catch (err) {
-    console.error("SESSION ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
