@@ -5,7 +5,9 @@ const {
   createTeacher,
   getAllTeachers,
   deleteTeacher,
-  createSubjectForTeacher
+  createSubjectForTeacher,
+  getSubjectsByTeacher,
+  deleteSubject
 } = require("../controllers/adminController");
 
 router.post("/teacher", auth("admin"), createTeacher);
