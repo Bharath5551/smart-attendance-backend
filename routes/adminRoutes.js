@@ -16,4 +16,15 @@ router.post(
   auth("admin"),
   createSubjectForTeacher
 );
+router.get(
+  "/teacher/:id/subjects",
+  auth("admin"),
+  getSubjectsByTeacher
+);
+
+router.delete(
+  "/subject/:id",
+  auth("admin"),
+  deleteSubject
+);
 module.exports = router;
