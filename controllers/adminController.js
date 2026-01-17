@@ -12,13 +12,15 @@ exports.deleteSubject = async (req, res) => {
   await Subject.findByIdAndDelete(req.params.id);
   res.json({ message: "Subject deleted" });
 };
+const mongoose = require("mongoose");
+
 exports.createSubjectForTeacher = async (req, res) => {
   const { name, code, teacherId } = req.body;
 
   const subject = await Subject.create({
     name,
     code,
-    facultyId: teacherId
+    facultyId: new mongoose.Types.ObjectId(teacherId) // 🔴 FIX
   });
 
   res.json({ message: "Subject assigned", subject });
