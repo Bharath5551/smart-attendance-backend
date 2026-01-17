@@ -19,10 +19,10 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
     },
     role: {
-      type: String,
-      enum: ["student", "teacher"],
-      default: "student",
-    },
+  type: String,
+  enum: ["student", "teacher", "admin"],
+  required: true
+},
     subjects: {
     type: [String], // array for future use
   default: []
