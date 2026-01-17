@@ -2,6 +2,16 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const Subject = require("../models/Subject");
 
+exports.getSubjectsByTeacher = async (req, res) => {
+  const { teacherId } = req.params;
+  const subjects = await Subject.find({ facultyId: teacherId });
+  res.json(subjects);
+};
+
+exports.deleteSubject = async (req, res) => {
+  await Subject.findByIdAndDelete(req.params.id);
+  res.json({ message: "Subject deleted" });
+};
 exports.createSubjectForTeacher = async (req, res) => {
   const { name, code, teacherId } = req.body;
 
