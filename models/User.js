@@ -23,10 +23,7 @@ const userSchema = new mongoose.Schema(
   enum: ["student", "teacher", "admin"],
   required: true
 },
-    subjects: {
-    type: [String], // array for future use
-  default: []
-},
+    
 
     // ---------- STUDENT DETAILS ----------
     usn: {
