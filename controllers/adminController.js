@@ -11,6 +11,10 @@ exports.createSubjectForTeacher = async (req, res) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
+    if (!mongoose.isValidObjectId(teacherId)) {
+      return res.status(400).json({ message: "Invalid teacher ID" });
+    }
+
     const subject = await Subject.create({
       name,
       code,
@@ -31,7 +35,15 @@ exports.createSubjectForTeacher = async (req, res) => {
 
 exports.getSubjectsByTeacher = async (req, res) => {
   try {
-    const teacherId = new mongoose.Types.ObjectId(req.params.id);
+    const { id } = req.params;
+
+    // 🔴 CRITICAL FIX
+    if (!mongoose.isValidObjectId(id)) {
+      console.error("INVALID TEACHER ID:", id);
+      return res.status(400).json({ message: "Invalid teacher ID" });
+    }
+
+    const teacherId = new mongoose.Types.ObjectId(id);
 
     const subjects = await Subject.find({
       facultyId: teacherId
@@ -48,6 +60,10 @@ exports.getSubjectsByTeacher = async (req, res) => {
 
 exports.deleteSubject = async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid subject ID" });
+    }
+
     await Subject.findByIdAndDelete(req.params.id);
     res.json({ message: "Subject deleted" });
   } catch (err) {
