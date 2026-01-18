@@ -1,5 +1,11 @@
 const express = require("express");
 const router = express.Router();
+const auth = require("../middleware/authMiddleware");
+const { getMySubjects } = require("../controllers/subjectController");
+
+router.get("/mine", auth("teacher"), getMySubjects);
+
+module.exports = router;
 
 // IMPORTANT: default import, NOT destructuring
 const auth = require("../middleware/authMiddleware");
