@@ -1,22 +1,20 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/authMiddleware");
 
+const auth = require("../middleware/authMiddleware");
 const {
-  createTeacher,
-  getAllTeachers,
-  deleteTeacher,
   createSubjectForTeacher,
   getSubjectsByTeacher,
   deleteSubject
 } = require("../controllers/adminController");
 
-router.post("/teacher", auth("admin"), createTeacher);
-router.get("/teachers", auth("admin"), getAllTeachers);
-router.delete("/teacher/:id", auth("admin"), deleteTeacher);
-
+// admin assigns subject
 router.post("/subject", auth("admin"), createSubjectForTeacher);
+
+// admin views teacher subjects
 router.get("/teacher/:id/subjects", auth("admin"), getSubjectsByTeacher);
+
+// admin deletes subject
 router.delete("/subject/:id", auth("admin"), deleteSubject);
 
 module.exports = router;
