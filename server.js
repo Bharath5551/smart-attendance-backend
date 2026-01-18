@@ -25,6 +25,7 @@ app.use("/api/subjects", require("./routes/subjectRoutes"));
 app.use("/api/sessions", require("./routes/sessionRoutes"));
 app.use("/api/attendance", require("./routes/attendanceRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/teacher", require("./routes/teacherRoutes"));
 
 app.get("/api/protected", auth, (req, res) => {
   res.json({ message: "Access granted", user: req.user });
