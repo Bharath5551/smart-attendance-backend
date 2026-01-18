@@ -1,43 +1,62 @@
 const User = require("../models/User");
-const Subject = require("../models/Subject");
-const Enrollment = require("../models/Enrollment");
+const Attendance = require("../models/Attendance");
 
-/* -------- ADD STUDENT TO SUBJECT -------- */
+/* ================= ADD STUDENT ================= */
+
 exports.addStudent = async (req, res) => {
-  const { name, usn, email, subjectId } = req.body;
+  try {
+    const { name, email, password, usn, branch, year, semester } = req.body;
 
-  const student = await User.create({
-    name,
-    usn,
-    email,
-    password: "default123",
-    role: "student"
-  });
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: "Student already exists" });
+    }
 
-  await Enrollment.create({
-    studentId: student._id,
-    subjectId
-  });
+    const bcrypt = require("bcryptjs");
+    const hashed = await bcrypt.hash(password, 10);
 
-  res.json({ message: "Student added", student });
+    const student = await User.create({
+      name,
+      email,
+      password: hashed,
+      role: "student",
+      usn,
+      branch,
+      year,
+      semester
+    });
+
+    res.status(201).json(student);
+  } catch (err) {
+    console.error("ADD STUDENT ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-/* -------- GET STUDENTS FOR SUBJECT -------- */
-exports.getStudents = async (req, res) => {
-  const { subjectId } = req.params;
+/* ================= DELETE STUDENT ================= */
 
-  const students = await Enrollment.find({ subjectId })
-    .populate("studentId", "name usn email");
-
-  res.json(students);
-};
-
-/* -------- DELETE STUDENT -------- */
 exports.deleteStudent = async (req, res) => {
-  const { studentId, subjectId } = req.body;
+  try {
+    const studentId = req.params.id;
 
-  await Enrollment.deleteOne({ studentId, subjectId });
-  await User.findByIdAndDelete(studentId);
+    await Attendance.deleteMany({ studentId });
+    await User.findByIdAndDelete(studentId);
 
-  res.json({ message: "Student deleted" });
+    res.json({ message: "Student deleted" });
+  } catch (err) {
+    console.error("DELETE STUDENT ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ================= GET STUDENTS ================= */
+
+exports.getStudents = async (req, res) => {
+  try {
+    const students = await User.find({ role: "student" }).select("-password");
+    res.json(students);
+  } catch (err) {
+    console.error("GET STUDENTS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
