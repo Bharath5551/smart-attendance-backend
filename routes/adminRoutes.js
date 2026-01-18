@@ -3,7 +3,6 @@ const router = express.Router();
 
 const auth = require("../middleware/authMiddleware");
 
-// ✅ IMPORT ALL REQUIRED CONTROLLERS
 const {
   createTeacher,
   getAllTeachers,
@@ -15,12 +14,12 @@ const {
 
 /* ================= ADMIN ROUTES ================= */
 
-// teachers
+// teacher management
 router.post("/teacher", auth("admin"), createTeacher);
 router.get("/teachers", auth("admin"), getAllTeachers);
 router.delete("/teacher/:id", auth("admin"), deleteTeacher);
 
-// subjects
+// subject management
 router.post("/subject", auth("admin"), createSubjectForTeacher);
 router.get("/teacher/:id/subjects", auth("admin"), getSubjectsByTeacher);
 router.delete("/subject/:id", auth("admin"), deleteSubject);
