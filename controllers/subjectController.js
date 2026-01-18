@@ -19,12 +19,19 @@ exports.createSubject = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+const mongoose = require("mongoose");
 
 exports.getMySubjects = async (req, res) => {
   try {
-    const subjects = await Subject.find({ facultyId: req.user.id });
+    const teacherId = new mongoose.Types.ObjectId(req.user.id);
+
+    const subjects = await Subject.find({
+      facultyId: teacherId
+    });
+
     res.json(subjects);
-  } catch (error) {
+  } catch (err) {
+    console.error("GET MY SUBJECTS ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
