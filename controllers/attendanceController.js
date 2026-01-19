@@ -1,5 +1,12 @@
 const Attendance = require("../models/Attendance");
 const Session = require("../models/Session");
+const session = await Session.findById(sessionId);
+
+if (!session) {
+  return res.status(400).json({ message: "Invalid session" });
+}
+
+// Location enforcement comes in next step
 
 exports.markAttendance = async (req, res) => {
   try {
