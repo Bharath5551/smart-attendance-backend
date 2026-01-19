@@ -13,7 +13,15 @@ const sessionSchema = new mongoose.Schema({
   expiresAt: {
     type: Date,
     required: true
-  }
+  },
+  locationRequired: {
+  type: Boolean,
+  default: false
+},
+teacherLocation: {
+  lat: Number,
+  lng: Number
+}
 }, { timestamps: true });
 
 module.exports = mongoose.model("Session", sessionSchema);
