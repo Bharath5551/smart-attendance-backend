@@ -11,9 +11,9 @@ exports.startSession = async (req, res) => {
 
     const session = await Session.create({
       subject,
-      facultyId: req.user.id,
+      teacherId: req.user.id,   // 🔴 THIS WAS MISSING
       startTime: new Date(),
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // existing logic
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       locationRequired,
       teacherLocation: locationRequired
         ? { lat, lng }
@@ -25,6 +25,7 @@ exports.startSession = async (req, res) => {
       expiresAt: session.expiresAt,
       locationRequired
     });
+
   } catch (err) {
     console.error("START SESSION ERROR:", err);
     res.status(500).json({ message: "Server error" });
