@@ -2,29 +2,31 @@ const Session = require("../models/Session");
 
 exports.startSession = async (req, res) => {
   try {
-    const { subject } = req.body;
-
-    if (!subject) {
-      return res.status(400).json({ message: "Subject required" });
-    }
-
-    // ⏱️ session valid for 2 minutes
-    const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
+    const {
+      subject,
+      locationRequired = false,
+      lat,
+      lng
+    } = req.body;
 
     const session = await Session.create({
-      teacherId: req.user.id,
       subject,
-      expiresAt
+      facultyId: req.user.id,
+      startTime: new Date(),
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // existing logic
+      locationRequired,
+      teacherLocation: locationRequired
+        ? { lat, lng }
+        : undefined
     });
 
     res.json({
-      message: "Session started",
       sessionId: session._id,
-      subject: session.subject,
-      expiresAt
+      expiresAt: session.expiresAt,
+      locationRequired
     });
-
   } catch (err) {
+    console.error("START SESSION ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
