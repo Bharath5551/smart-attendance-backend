@@ -17,6 +17,9 @@ app.use(express.json());
 app.post("/ping", (req, res) => {
   res.status(200).json({ message: "Ping OK" });
 });
+app.get("/ping", (req, res) => {
+  res.status(200).send("pong");
+});
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
