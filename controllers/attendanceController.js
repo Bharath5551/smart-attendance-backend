@@ -104,3 +104,22 @@ exports.getSubjectAttendance = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+exports.getSessionAttendance = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const records = await Attendance.find({ sessionId })
+      .populate("studentId", "name usn")
+      .sort({ createdAt: 1 });
+
+    const students = records.map(r => ({
+      name: r.studentId.name,
+      usn: r.studentId.usn
+    }));
+
+    res.json(students);
+  } catch (err) {
+    console.error("SESSION ATTENDANCE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
