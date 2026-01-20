@@ -17,5 +17,10 @@ router.get(
   auth("teacher"),
   getSubjectAttendance
 );
+router.get(
+  "/session/:sessionId",
+  auth("teacher"),
+  getSessionAttendance
+);
 
 module.exports = router;
