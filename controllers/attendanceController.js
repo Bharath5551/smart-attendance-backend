@@ -1,36 +1,87 @@
-const express = require("express");
-const router = express.Router();
-const auth = require("../middleware/authMiddleware");
+const Attendance = require("../models/Attendance");
+const Session = require("../models/Session");
+const User = require("../models/User");
 
-// ✅ IMPORT ALL CONTROLLERS PROPERLY
-const attendanceController = require("../controllers/attendanceController");
+/* ================= MARK ATTENDANCE ================= */
+exports.markAttendance = async (req, res) => {
+  try {
+    const { sessionId } = req.body;
 
-// MARK ATTENDANCE (STUDENT)
-router.post(
-  "/mark",
-  auth("student"),
-  attendanceController.markAttendance
-);
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(400).json({ message: "Invalid session" });
+    }
 
-// ATTENDANCE SUMMARY (STUDENT)
-router.get(
-  "/summary",
-  auth("student"),
-  attendanceController.getAttendanceSummary
-);
+    await Attendance.create({
+      sessionId,
+      studentId: req.user.id,
+      subject: session.subject
+    });
 
-// SUBJECT ATTENDANCE (TEACHER)
-router.get(
-  "/subject/:subject",
-  auth("teacher"),
-  attendanceController.getSubjectAttendance
-);
+    res.json({ message: "Attendance marked" });
+  } catch (err) {
+    console.error("MARK ATTENDANCE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
-// 🔴 LIVE SESSION ATTENDANCE (TEACHER)
-router.get(
-  "/session/:sessionId",
-  auth("teacher"),
-  attendanceController.getSessionAttendance
-);
+/* ================= SESSION LIVE ATTENDANCE ================= */
+exports.getSessionAttendance = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
 
-module.exports = router;
+    const records = await Attendance.find({ sessionId })
+      .populate("studentId", "name usn")
+      .sort({ createdAt: 1 });
+
+    const students = records.map(r => ({
+      name: r.studentId.name,
+      usn: r.studentId.usn
+    }));
+
+    res.json(students);
+  } catch (err) {
+    console.error("SESSION ATTENDANCE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ================= SUBJECT ATTENDANCE ================= */
+exports.getSubjectAttendance = async (req, res) => {
+  try {
+    const subject = req.params.subject;
+
+    const totalSessions = await Session.countDocuments({ subject });
+    const students = await User.find({ role: "student" });
+
+    const result = [];
+
+    for (const student of students) {
+      const attended = await Attendance.countDocuments({
+        studentId: student._id,
+        subject
+      });
+
+      const percentage =
+        totalSessions === 0
+          ? 0
+          : ((attended / totalSessions) * 100).toFixed(1);
+
+      result.push({
+        name: student.name,
+        usn: student.usn,
+        attended,
+        percentage
+      });
+    }
+
+    res.json({
+      subject,
+      totalSessions,
+      students: result
+    });
+  } catch (err) {
+    console.error("SUBJECT ATTENDANCE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
