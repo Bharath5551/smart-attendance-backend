@@ -45,13 +45,24 @@ exports.getAttendanceSummary = async (req, res) => {
   try {
     const studentId = req.user.id;
 
+    // 1️⃣ Fetch attendance records for student
     const attendance = await Attendance.find({ studentId });
-    const sessions = await Session.find();
 
+    if (!attendance.length) {
+      return res.json([]);
+    }
+
+    // 2️⃣ Build attended map (subjects attended at least once)
     const attendedMap = {};
     attendance.forEach(a => {
       const subject = a.subject.toUpperCase();
       attendedMap[subject] = (attendedMap[subject] || 0) + 1;
+    });
+
+    // 3️⃣ Fetch total sessions ONLY for attended subjects
+    const subjects = Object.keys(attendedMap);
+    const sessions = await Session.find({
+      subject: { $in: subjects }
     });
 
     const totalMap = {};
@@ -60,23 +71,27 @@ exports.getAttendanceSummary = async (req, res) => {
       totalMap[subject] = (totalMap[subject] || 0) + 1;
     });
 
-    const summary = Object.keys(totalMap).map(subject => {
-      const attended = attendedMap[subject] || 0;
-      const total = totalMap[subject];
-      const percentage =
-        total === 0 ? 0 : ((attended / total) * 100).toFixed(1);
+    // 4️⃣ Build final summary
+    const summary = subjects.map(subject => {
+      const attended = attendedMap[subject];
+      const total = totalMap[subject] || attended; // fallback safety
+      const percentage = ((attended / total) * 100).toFixed(1);
 
-      return { subject, attended, total, percentage };
+      return {
+        subject,
+        attended,
+        total,
+        percentage
+      };
     });
 
     res.json(summary);
 
   } catch (err) {
-    console.error("SUMMARY ERROR:", err);
+    console.error("ATTENDANCE SUMMARY ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 /* ================= TEACHER SUBJECT VIEW ================= */
 
 exports.getSubjectAttendance = async (req, res) => {
