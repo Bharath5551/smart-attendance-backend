@@ -7,23 +7,36 @@ const User = require("../models/User");
 exports.markAttendance = async (req, res) => {
   try {
     const { sessionId } = req.body;
+    const studentId = req.user.id; // ✅ FROM JWT
 
     const session = await Session.findById(sessionId);
     if (!session) {
       return res.status(400).json({ message: "Invalid session" });
     }
 
-    // ⛔ HARD BACKEND EXPIRY CHECK (3 MIN)
+    // ⛔ BLOCK EXPIRED SESSION
     if (new Date() > session.expiresAt) {
-      return res.status(403).json({
-        message: "Session expired. Attendance not allowed."
-      });
+      return res.status(403).json({ message: "Session expired" });
     }
 
-    // ✅ CONTINUE YOUR EXISTING ATTENDANCE LOGIC HERE
-    // (duplicate check, save attendance, etc.)
+    // ⛔ PREVENT DUPLICATE ATTENDANCE
+    const existing = await Attendance.findOne({
+      sessionId,
+      studentId
+    });
 
-    res.json({ message: "Attendance marked" });
+    if (existing) {
+      return res.status(409).json({ message: "Attendance already marked" });
+    }
+
+    // ✅ SAVE ATTENDANCE WITH CORRECT REFERENCES
+    await Attendance.create({
+      studentId,               // 🔴 THIS FIXES NAME ISSUE
+      sessionId,
+      subject: session.subject
+    });
+
+    res.json({ message: "Attendance marked successfully" });
 
   } catch (err) {
     console.error("MARK ATTENDANCE ERROR:", err);
