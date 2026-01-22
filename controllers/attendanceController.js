@@ -4,52 +4,41 @@ const User = require("../models/User");
 
 /* ================= MARK ATTENDANCE ================= */
 
-exports.getAttendanceSummary = async (req, res) => {
+exports.markAttendance = async (req, res) => {
   try {
+    const { sessionId } = req.body;
     const studentId = req.user.id;
 
-    // 1️⃣ Get all attendance records for student
-    const attendance = await Attendance.find({ studentId });
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(400).json({ message: "Invalid session" });
+    }
 
-    // 2️⃣ Build attended map
-    const attendedMap = {};
-    attendance.forEach(a => {
-      const subject = a.subject.toUpperCase();
-      attendedMap[subject] = (attendedMap[subject] || 0) + 1;
+    // ⛔ Block expired sessions
+    if (new Date() > session.expiresAt) {
+      return res.status(403).json({ message: "Session expired" });
+    }
+
+    // ⛔ Prevent duplicate attendance
+    const existing = await Attendance.findOne({ sessionId, studentId });
+    if (existing) {
+      return res.status(409).json({ message: "Attendance already marked" });
+    }
+
+    await Attendance.create({
+      studentId,
+      sessionId,
+      subject: session.subject
     });
 
-    // 3️⃣ Get all sessions (classes conducted)
-    const sessions = await Session.find();
-
-    // 4️⃣ Build total sessions map
-    const totalMap = {};
-    sessions.forEach(s => {
-      const subject = s.subject.toUpperCase();
-      totalMap[subject] = (totalMap[subject] || 0) + 1;
-    });
-
-    // 5️⃣ Build final summary
-    const summary = Object.keys(totalMap).map(subject => {
-      const attended = attendedMap[subject] || 0;
-      const total = totalMap[subject];
-      const percentage =
-        total === 0 ? 0 : ((attended / total) * 100).toFixed(1);
-
-      return {
-        subject,
-        attended,
-        total,
-        percentage
-      };
-    });
-
-    res.json(summary);
+    res.json({ message: "Attendance marked successfully" });
 
   } catch (err) {
-    console.error("ATTENDANCE SUMMARY ERROR:", err);
+    console.error("MARK ATTENDANCE ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 /* ================= STUDENT SUMMARY ================= */
 
 exports.getAttendanceSummary = async (req, res) => {
@@ -57,34 +46,30 @@ exports.getAttendanceSummary = async (req, res) => {
     const studentId = req.user.id;
 
     const attendance = await Attendance.find({ studentId });
+    const sessions = await Session.find();
 
-    if (!attendance.length) {
-      return res.json([]);
-    }
-
-    const summary = {};
-
+    const attendedMap = {};
     attendance.forEach(a => {
       const subject = a.subject.toUpperCase();
-
-      if (!summary[subject]) {
-        summary[subject] = { attended: 0, total: 0 };
-      }
-      summary[subject].attended += 1;
-      summary[subject].total += 1;
+      attendedMap[subject] = (attendedMap[subject] || 0) + 1;
     });
 
-    const result = Object.keys(summary).map(subject => {
-      const { attended, total } = summary[subject];
-      return {
-        subject,
-        attended,
-        total,
-        percentage: ((attended / total) * 100).toFixed(1)
-      };
+    const totalMap = {};
+    sessions.forEach(s => {
+      const subject = s.subject.toUpperCase();
+      totalMap[subject] = (totalMap[subject] || 0) + 1;
     });
 
-    res.json(result);
+    const summary = Object.keys(totalMap).map(subject => {
+      const attended = attendedMap[subject] || 0;
+      const total = totalMap[subject];
+      const percentage =
+        total === 0 ? 0 : ((attended / total) * 100).toFixed(1);
+
+      return { subject, attended, total, percentage };
+    });
+
+    res.json(summary);
 
   } catch (err) {
     console.error("SUMMARY ERROR:", err);
@@ -92,7 +77,7 @@ exports.getAttendanceSummary = async (req, res) => {
   }
 };
 
-/* ================= SUBJECT ATTENDANCE ================= */
+/* ================= TEACHER SUBJECT VIEW ================= */
 
 exports.getSubjectAttendance = async (req, res) => {
   try {
@@ -134,7 +119,7 @@ exports.getSubjectAttendance = async (req, res) => {
   }
 };
 
-/* ================= LIVE SESSION ATTENDANCE ================= */
+/* ================= LIVE SESSION ================= */
 
 exports.getSessionAttendance = async (req, res) => {
   try {
