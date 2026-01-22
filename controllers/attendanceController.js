@@ -13,7 +13,15 @@ exports.markAttendance = async (req, res) => {
       return res.status(400).json({ message: "Invalid session" });
     }
 
-    // (keep your existing mark logic here)
+    // ⛔ HARD BACKEND EXPIRY CHECK (3 MIN)
+    if (new Date() > session.expiresAt) {
+      return res.status(403).json({
+        message: "Session expired. Attendance not allowed."
+      });
+    }
+
+    // ✅ CONTINUE YOUR EXISTING ATTENDANCE LOGIC HERE
+    // (duplicate check, save attendance, etc.)
 
     res.json({ message: "Attendance marked" });
 
@@ -65,14 +73,13 @@ exports.getAttendanceSummary = async (req, res) => {
   }
 };
 
-/* ================= TEACHER SUBJECT VIEW ================= */
+/* ================= SUBJECT ATTENDANCE ================= */
 
 exports.getSubjectAttendance = async (req, res) => {
   try {
     const subject = req.params.subject;
 
     const totalSessions = await Session.countDocuments({ subject });
-
     const students = await User.find({ role: "student" });
 
     const result = [];
