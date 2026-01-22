@@ -4,46 +4,52 @@ const User = require("../models/User");
 
 /* ================= MARK ATTENDANCE ================= */
 
-exports.markAttendance = async (req, res) => {
+exports.getAttendanceSummary = async (req, res) => {
   try {
-    const { sessionId } = req.body;
-    const studentId = req.user.id; // ✅ FROM JWT
+    const studentId = req.user.id;
 
-    const session = await Session.findById(sessionId);
-    if (!session) {
-      return res.status(400).json({ message: "Invalid session" });
-    }
+    // 1️⃣ Get all attendance records for student
+    const attendance = await Attendance.find({ studentId });
 
-    // ⛔ BLOCK EXPIRED SESSION
-    if (new Date() > session.expiresAt) {
-      return res.status(403).json({ message: "Session expired" });
-    }
-
-    // ⛔ PREVENT DUPLICATE ATTENDANCE
-    const existing = await Attendance.findOne({
-      sessionId,
-      studentId
+    // 2️⃣ Build attended map
+    const attendedMap = {};
+    attendance.forEach(a => {
+      const subject = a.subject.toUpperCase();
+      attendedMap[subject] = (attendedMap[subject] || 0) + 1;
     });
 
-    if (existing) {
-      return res.status(409).json({ message: "Attendance already marked" });
-    }
+    // 3️⃣ Get all sessions (classes conducted)
+    const sessions = await Session.find();
 
-    // ✅ SAVE ATTENDANCE WITH CORRECT REFERENCES
-    await Attendance.create({
-      studentId,               // 🔴 THIS FIXES NAME ISSUE
-      sessionId,
-      subject: session.subject
+    // 4️⃣ Build total sessions map
+    const totalMap = {};
+    sessions.forEach(s => {
+      const subject = s.subject.toUpperCase();
+      totalMap[subject] = (totalMap[subject] || 0) + 1;
     });
 
-    res.json({ message: "Attendance marked successfully" });
+    // 5️⃣ Build final summary
+    const summary = Object.keys(totalMap).map(subject => {
+      const attended = attendedMap[subject] || 0;
+      const total = totalMap[subject];
+      const percentage =
+        total === 0 ? 0 : ((attended / total) * 100).toFixed(1);
+
+      return {
+        subject,
+        attended,
+        total,
+        percentage
+      };
+    });
+
+    res.json(summary);
 
   } catch (err) {
-    console.error("MARK ATTENDANCE ERROR:", err);
+    console.error("ATTENDANCE SUMMARY ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 /* ================= STUDENT SUMMARY ================= */
 
 exports.getAttendanceSummary = async (req, res) => {
