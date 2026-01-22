@@ -13,7 +13,7 @@ exports.startSession = async (req, res) => {
       subject,
       teacherId: req.user.id,   // 🔴 THIS WAS MISSING
       startTime: new Date(),
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 3 * 60 * 1000),
       locationRequired,
       teacherLocation: locationRequired
         ? { lat, lng }
