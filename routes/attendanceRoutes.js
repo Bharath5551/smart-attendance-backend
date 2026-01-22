@@ -1,25 +1,42 @@
 const express = require("express");
 const router = express.Router();
+
 const auth = require("../middleware/authMiddleware");
 
-const attendanceController = require("../controllers/attendanceController");
+// ✅ IMPORT CONTROLLERS CORRECTLY
+const {
+  markAttendance,
+  getAttendanceSummary,
+  getSubjectAttendance,
+  getSessionAttendance
+} = require("../controllers/attendanceController");
+
+/* ---------------- STUDENT ---------------- */
 
 router.post(
   "/mark",
   auth("student"),
-  attendanceController.markAttendance
+  markAttendance
+);
+
+router.get(
+  "/summary",
+  auth("student"),
+  getAttendanceSummary
+);
+
+/* ---------------- TEACHER ---------------- */
+
+router.get(
+  "/subject/:subject",
+  auth("teacher"),
+  getSubjectAttendance
 );
 
 router.get(
   "/session/:sessionId",
   auth("teacher"),
-  attendanceController.getSessionAttendance
-);
-
-router.get(
-  "/subject/:subject",
-  auth("teacher"),
-  attendanceController.getSubjectAttendance
+  getSessionAttendance
 );
 
 module.exports = router;
