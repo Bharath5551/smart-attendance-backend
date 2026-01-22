@@ -1,87 +1,46 @@
-const Attendance = require("../models/Attendance");
-const Session = require("../models/Session");
-const User = require("../models/User");
+require("dotenv").config();
 
-/* ================= MARK ATTENDANCE ================= */
-exports.markAttendance = async (req, res) => {
-  try {
-    const { sessionId } = req.body;
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db");
+connectDB();
+const app = express(); // ✅ app FIRST
 
-    const session = await Session.findById(sessionId);
-    if (!session) {
-      return res.status(400).json({ message: "Invalid session" });
-    }
+// Connect DB
+connectDB();
 
-    await Attendance.create({
-      sessionId,
-      studentId: req.user.id,
-      subject: session.subject
-    });
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-    res.json({ message: "Attendance marked" });
-  } catch (err) {
-    console.error("MARK ATTENDANCE ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+// TEST ROUTE (now app exists)
+app.post("/ping", (req, res) => {
+  res.status(200).json({ message: "Ping OK" });
+});
+app.get("/ping", (req, res) => {
+  res.status(200).send("pong");
+});
 
-/* ================= SESSION LIVE ATTENDANCE ================= */
-exports.getSessionAttendance = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
+// Routes
+app.use("/api/auth", require("./routes/authRoutes"));
+const auth = require("./middleware/authMiddleware");
+app.use("/api/subjects", require("./routes/subjectRoutes"));
+app.use("/api/sessions", require("./routes/sessionRoutes"));
+app.use("/api/attendance", require("./routes/attendanceRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/teacher", require("./routes/teacherRoutes"));
 
-    const records = await Attendance.find({ sessionId })
-      .populate("studentId", "name usn")
-      .sort({ createdAt: 1 });
+app.get("/api/protected", auth, (req, res) => {
+  res.json({ message: "Access granted", user: req.user });
+});
 
-    const students = records.map(r => ({
-      name: r.studentId.name,
-      usn: r.studentId.usn
-    }));
+// Health check
+app.get("/", (req, res) => {
+  res.send("API running");
+});
 
-    res.json(students);
-  } catch (err) {
-    console.error("SESSION ATTENDANCE ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+const PORT = process.env.PORT || 3000;
 
-/* ================= SUBJECT ATTENDANCE ================= */
-exports.getSubjectAttendance = async (req, res) => {
-  try {
-    const subject = req.params.subject;
-
-    const totalSessions = await Session.countDocuments({ subject });
-    const students = await User.find({ role: "student" });
-
-    const result = [];
-
-    for (const student of students) {
-      const attended = await Attendance.countDocuments({
-        studentId: student._id,
-        subject
-      });
-
-      const percentage =
-        totalSessions === 0
-          ? 0
-          : ((attended / totalSessions) * 100).toFixed(1);
-
-      result.push({
-        name: student.name,
-        usn: student.usn,
-        attended,
-        percentage
-      });
-    }
-
-    res.json({
-      subject,
-      totalSessions,
-      students: result
-    });
-  } catch (err) {
-    console.error("SUBJECT ATTENDANCE ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
