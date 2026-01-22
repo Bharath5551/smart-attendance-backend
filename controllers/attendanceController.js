@@ -1,87 +1,58 @@
 const Attendance = require("../models/Attendance");
-const Session = require("../models/Session");
-const User = require("../models/User");
 
-/* ================= MARK ATTENDANCE ================= */
-exports.markAttendance = async (req, res) => {
+exports.getAttendanceSummary = async (req, res) => {
   try {
-    const { sessionId } = req.body;
+    const studentId = req.user.id;
 
-    const session = await Session.findById(sessionId);
-    if (!session) {
-      return res.status(400).json({ message: "Invalid session" });
+    // 1️⃣ Fetch all attendance for this student
+    const attendance = await Attendance.find({ studentId });
+
+    if (!attendance || attendance.length === 0) {
+      return res.json([]);
     }
 
-    await Attendance.create({
-      sessionId,
-      studentId: req.user.id,
-      subject: session.subject
+    // 2️⃣ Build subject map
+    const summaryMap = {};
+
+    attendance.forEach(a => {
+      const subject = a.subject.trim().toUpperCase();
+
+      if (!summaryMap[subject]) {
+        summaryMap[subject] = {
+          subject,
+          attended: 0,
+          total: 0
+        };
+      }
+
+      summaryMap[subject].attended += 1;
     });
 
-    res.json({ message: "Attendance marked" });
-  } catch (err) {
-    console.error("MARK ATTENDANCE ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+    // 3️⃣ Total sessions = count of unique sessions per subject
+    attendance.forEach(a => {
+      const subject = a.subject.trim().toUpperCase();
+      summaryMap[subject].total += 1;
+    });
 
-/* ================= LIVE SESSION ATTENDANCE ================= */
-exports.getSessionAttendance = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-
-    const records = await Attendance.find({ sessionId })
-      .populate("studentId", "name usn")
-      .sort({ createdAt: 1 });
-
-    const students = records.map(r => ({
-      name: r.studentId.name,
-      usn: r.studentId.usn
-    }));
-
-    res.json(students);
-  } catch (err) {
-    console.error("SESSION ATTENDANCE ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-/* ================= SUBJECT ATTENDANCE ================= */
-exports.getSubjectAttendance = async (req, res) => {
-  try {
-    const subject = req.params.subject;
-
-    const totalSessions = await Session.countDocuments({ subject });
-    const students = await User.find({ role: "student" });
-
-    const result = [];
-
-    for (const student of students) {
-      const attended = await Attendance.countDocuments({
-        studentId: student._id,
-        subject
-      });
-
+    // 4️⃣ Build final response
+    const result = Object.values(summaryMap).map(item => {
       const percentage =
-        totalSessions === 0
+        item.total === 0
           ? 0
-          : ((attended / totalSessions) * 100).toFixed(1);
+          : ((item.attended / item.total) * 100).toFixed(1);
 
-      result.push({
-        name: student.name,
-        usn: student.usn,
-        attended,
+      return {
+        subject: item.subject,
+        attended: item.attended,
+        total: item.total,
         percentage
-      });
-    }
-
-    res.json({
-      subject,
-      totalSessions,
-      students: result
+      };
     });
+
+    res.json(result);
+
   } catch (err) {
-    console.error("SUBJECT ATTENDANCE ERROR:", err);
+    console.error("ATTENDANCE SUMMARY ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
