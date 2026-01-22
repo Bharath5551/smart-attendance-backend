@@ -1,26 +1,26 @@
 const mongoose = require("mongoose");
 
 const sessionSchema = new mongoose.Schema({
-  subject: {
-    type: String,
-    required: true
-  },
   teacherId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true
   },
-  startTime: Date,
-  expiresAt: Date,
-
-  // location feature
+  subject: {
+    type: String,
+    required: true
+  },
+  expiresAt: {
+    type: Date,
+    required: true
+  },
   locationRequired: {
     type: Boolean,
     default: false
   },
-  teacherLocation: {
-    lat: Number,
-    lng: Number
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 });
 
