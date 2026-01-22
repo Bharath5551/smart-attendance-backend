@@ -10,8 +10,13 @@ const {
   getSessionAttendance
 } = require("../controllers/attendanceController");
 
+/* -------- STUDENT -------- */
+
 router.post("/mark", auth("student"), markAttendance);
 router.get("/summary", auth("student"), getAttendanceSummary);
+
+/* -------- TEACHER -------- */
+
 router.get("/subject/:subject", auth("teacher"), getSubjectAttendance);
 router.get("/session/:sessionId", auth("teacher"), getSessionAttendance);
 
