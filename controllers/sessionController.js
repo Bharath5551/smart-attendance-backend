@@ -9,11 +9,14 @@ exports.startSession = async (req, res) => {
       lng
     } = req.body;
 
+    // ⏱️ 3 MINUTE SESSION
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
+
     const session = await Session.create({
       subject,
-      teacherId: req.user.id,   // 🔴 THIS WAS MISSING
+      teacherId: req.user.id,
       startTime: new Date(),
-      expiresAt: new Date(Date.now() + 3 * 60 * 1000),
+      expiresAt,
       locationRequired,
       teacherLocation: locationRequired
         ? { lat, lng }
@@ -22,7 +25,7 @@ exports.startSession = async (req, res) => {
 
     res.json({
       sessionId: session._id,
-      expiresAt: session.expiresAt,
+      expiresAt,
       locationRequired
     });
 
