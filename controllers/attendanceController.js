@@ -25,7 +25,7 @@ exports.markAttendance = async (req, res) => {
   }
 };
 
-/* ================= SESSION LIVE ATTENDANCE ================= */
+/* ================= LIVE SESSION ATTENDANCE ================= */
 exports.getSessionAttendance = async (req, res) => {
   try {
     const { sessionId } = req.params;
