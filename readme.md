@@ -1,6 +1,12 @@
 # 🚀 Smart Attendance System  
 ### Secure • Real-Time • QR-Based • Location-Aware
 
+**Live admin dashboard:** https://websites-for-smartattendence.vercel.app  
+**Live API:** https://smart-attendance-api1.onrender.com  
+**Dashboard code:** [websites-for-smartattendence](https://github.com/Bharath5551/websites-for-smartattendence)
+
+> The API is on Render's free tier, so the first request can take around 30 seconds while it wakes up.
+
 A full-stack attendance management platform designed to eliminate proxy attendance using **secure session validation, QR authentication, and optional geo-fencing**.
 
 This is a production-style project built with real-world architecture principles.
@@ -117,8 +123,8 @@ Security is enforced:
 - Mongoose ODM
 
 ## 🚀 Deployment
-- Backend: Render
-- Frontend: Vercel
+- Backend: Render ([smart-attendance-api1.onrender.com](https://smart-attendance-api1.onrender.com))
+- Frontend: Vercel ([websites-for-smartattendence.vercel.app](https://websites-for-smartattendence.vercel.app))
 
 ---
 
